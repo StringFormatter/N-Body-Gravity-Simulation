@@ -7,6 +7,15 @@ from numpy.random import default_rng
 from scipy.stats import cumfreq
 
 def InitialConditions(R, N, c, m, seed):
+    '''Returns a list of points corresponding to a spherical mass distribution
+
+    Keyword arguments:
+    R    -- the radius of the sphere particles are distributed inside
+    N    -- the number of particles to generate
+    c    -- the center of the sphere
+    m    -- the mass given to each particle
+    seed -- the seed to use for random number generation
+    '''
     rng = default_rng(seed)
     x1  = rng.random(N)
     x2  = rng.random(N)
@@ -26,6 +35,13 @@ def InitialConditions(R, N, c, m, seed):
     return (coords, velocities)
 
 def TimeStep(v, a, dl):
+    '''Computes the appropriate time step value for one iteration of Verlet's
+
+    Keyword arguements:
+    v  -- a numpy array corresponding to the velocities of each point
+    a  -- a numpy array corresponding to the accelerations of each point
+    dl -- the length of a simulation grid cell
+    '''
     lmd   = .5
     v_max = max([sum(v[i,:]**2)**(1/2) for i in range(v.shape[0])])
     if v_max == 0:
@@ -34,8 +50,18 @@ def TimeStep(v, a, dl):
     return lmd*min(dl/v_max, (dl/a_max)**(1/2))
 
 def verlet(t0, x0, v0, tf, Nc, L):
+    '''An implementation of Verlet Integration
+
+    Keyword arguments:
+    t0 -- starting time
+    x0 -- initial numpy array of particle coordinates
+    v0 -- initial numpy array of particle velocities
+    tf -- stopping time
+    Nc -- the number of grid cells in one dimension of the cubic grid
+    L  -- the length of one side of the simulation space
+    '''
     # Init
-    t  = t0ls
+    t  = t0
     x  = x0
     v  = v0
     dl = L/Nc
@@ -57,6 +83,15 @@ def verlet(t0, x0, v0, tf, Nc, L):
     return (t, x, v, a)
 
 def VerletHeader(x0, v0, ts, Nc, L):
+    '''Computes Verlet's method with regular snapshots of simulation progress
+
+    Keyword arguments:
+    x0 -- initial numpy array of particle coordinates
+    v0 -- initial numpy array of particle velocities
+    ts -- an array of times to get snapshots of
+    Nc -- the number of grid cells in one dimension of the cubic grid
+    L  -- the length of one side of the simulation space
+    '''
     t0 = ts[0]
     x  = [x0]
     v  = [v0]
@@ -70,6 +105,19 @@ def VerletHeader(x0, v0, ts, Nc, L):
     return (x, v, a)
 
 if __name__=="__main__":
+    '''
+    The proceeding block runs the simulation for a grid with 
+    side lengths of one unit and 128 cells. The starting 
+    mass distribution consists of a sphere with a radius of 
+    1/4 a unit centered at the center of the grid with 32**3 
+    points. We run the simulation for tdyn time where tdyn 
+    is the dynamical time of the system, and we take snapshots
+    of the system in intervals of 1/20 of the total time.
+
+    Finally, we graph the state of the system from two viewing 
+    planes, the mass profile, and the acceleration profile at 
+    each snapshot.
+    '''
     L     = 1
     Nc    = 128
     R     = L/4
