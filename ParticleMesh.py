@@ -3,6 +3,17 @@ import numpy as np
 from numpy import fft
 
 def DensityField(points, Nc, L):
+    '''Broadcasts the mass of a list of points into a density grid 
+
+    Uses a Cloud in Cell (CIC) scheme where each point is treated
+    as the size of one grid cell and each actual grid cell is assigned 
+    mass proportional to the amount of overlap with the point cell.
+
+    Keyword arguments:
+    points -- a numpy array containing the coordinates and mass of each point
+    Nc     -- the number of grid cells in one dimension of the cubic grid
+    L      -- the length of one side of the simulation space
+    '''
     density = np.zeros((Nc, Nc, Nc))
     dl      = L/Nc
     N       = points.shape[0]
@@ -25,6 +36,18 @@ def DensityField(points, Nc, L):
                         # particle would contribute to is out of bounds
 
 def KernelCell(i,j,k,Nc):
+    '''Computes the value of our kernel in Fourier space
+
+    The traditional kernel for Gravitational Poisson's equation is 
+    isotropic, but we use an anisotropic form which solves the finite-difference
+    approximation of Poisson's equation.
+
+    Keyword arguments:
+    i  -- integer wavenumber for the "x" component
+    j  -- integer wavenumber for the "y" component
+    k  -- integer wavenumber for the "z" component
+    Nc -- the number of wavenumbers along one dimension
+    '''
     G = 1 
     if i == 0 and j == 0 and k == 0:
         return 0
@@ -45,6 +68,21 @@ def KernelCell(i,j,k,Nc):
     return -np.pi*G/(np.sin(kx/2)**2 + np.sin(ky/2)**2 + np.sin(kz/2)**2)
 
 def PotentialField(density, Nc, L):
+    '''Solves' Poisson's equation to find gravitational potential
+
+    The differential form of Gauss' law for gravity can be transformed 
+    into Poisson's equation via relating gravitational potential to 
+    density. We can solve Poisson's equation with a Green's function, 
+    which corresponds to a convolution of the density field with a 
+    specific kernel. Therefore, we find gravitational potential by 
+    taking the product of a Real Fourier transform of the density field 
+    and the Kernel, also in Fourier space.
+
+    Keyword arguments:
+    density -- a 3d numpy array containing the mass density of each grid cell
+    Nc      -- the number of grid cells in one direction of the cubic grid
+    L       -- the length of one side of the simulation space
+    '''
     fft_density = fft.rfftn(density)
     Nx, Ny, Nz = fft_density.shape
     for i in range(Nx):
@@ -56,6 +94,12 @@ def PotentialField(density, Nc, L):
     return fft.irfftn(fft_density, density.shape)*fudge
 
 def ForceField(potential, L):
+    '''Differentiates gravitational potentials to get forces
+
+    Keyword arguments:
+    potential -- a 3d numpy array containing the gravitational potentials
+    L         -- the length of one side of the simulation space
+    '''
     Nc    = potential.shape[0]
     h     = L/Nc
     force = np.zeros((Nc, Nc, Nc, 3))
@@ -78,6 +122,18 @@ def ForceField(potential, L):
     return -force
 
 def ForceCIC(force, points, L):
+    '''Interpolates the force field to find the force experienced by each point
+
+    Again, a Cloud in Cell scheme is used to interpolate, where the particle is
+    treated as a grid cell, and the amount of force a given cell contributes is
+    proportional to the amount of overlap between the particle cell and the 
+    given cell.
+
+    Keyword arguments:
+    force  -- a 3d numpy array containing the force field
+    points -- a numpy array containing the coordinates and mass of each point
+    L      -- the length of one side of the simulation space
+    '''
     N      = points.shape[0]
     Nc     = force.shape[0]
     dl     = L/Nc
@@ -103,10 +159,17 @@ def ForceCIC(force, points, L):
                         # interacts with are out of bounds
     return pforce
 
-def ForceComputation(xvec, Nc, L):
-    density   = DensityField(xvec, Nc, L)
+def ForceComputation(points, Nc, L):
+    '''Uses the particle mesh scheme to find the force acting on each particle
+
+    Keyword arguments:
+    points -- a numpy array containing the coordinates and mass of each point
+    Nc     -- the number of grid cells in one dimension of the cubic grid
+    L      -- the length of one side of the simulation space
+    '''
+    density   = DensityField(points, Nc, L)
     potential = PotentialField(density, Nc, L)
     force     = ForceField(potential, L)
-    pforce    = ForceCIC(force, xvec, L)
+    pforce    = ForceCIC(force, points, L)
     return pforce
 
