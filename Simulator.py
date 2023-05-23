@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from numpy.random import default_rng
 from scipy.stats import cumfreq
+from ParticleMesh import *
 
 def InitialConditions(R, N, c, m, seed):
     '''Returns a list of points corresponding to a spherical mass distribution
@@ -123,7 +124,8 @@ if __name__=="__main__":
     R     = L/4
     c     = [L/2, L/2, L/2]
     N     = 32**3
-    m     = .1 # kg
+    m     = .1
+    G     = 1
     seed  = 13
     tdyn  = ( (np.pi**2*R**3)/(4*G*m*N) )**(1/2)
     t     = tdyn*np.array([i*.05 for i in range(21)])
@@ -138,10 +140,10 @@ if __name__=="__main__":
     r_sample = np.linspace(0, R, 100)
     Init_M   = m*N*r_sample**3/R**3
 
-    xsize = 36
-    ysize = 190
-    plt.figure(figsize=(xsize,ysize))
-    plt.subplots_adjust(wspace=.38, hspace=.35)
+    #xsize = 36
+    #ysize = 190
+    #plt.figure(figsize=(xsize,ysize))
+    #plt.subplots_adjust(wspace=.38, hspace=.35)
 
     for i in range(21):
         plt.subplot(21, 4, 4*i+1)

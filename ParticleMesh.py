@@ -1,6 +1,8 @@
 import math
 import numpy as np
 from numpy import fft
+import matplotlib        as mpl
+import matplotlib.pyplot as plt
 
 def DensityField(points, Nc, L):
     '''Broadcasts the mass of a list of points into a density grid 
@@ -24,7 +26,7 @@ def DensityField(points, Nc, L):
         k = [math.floor(z/dl-1/2), math.floor(z/dl+1/2)]
         dx = [dl*(i[0] + 3/2) - x, x + dl*(1/2 - i[1])]
         dy = [dl*(j[0] + 3/2) - y, y + dl*(1/2 - j[1])]
-        dx = [dl*(k[0] + 3/2) - z, z + dl*(1/2 - k[1])]
+        dz = [dl*(k[0] + 3/2) - z, z + dl*(1/2 - k[1])]
         for a in range(2):
             for b in range(2):
                 for c in range(2):
@@ -34,6 +36,7 @@ def DensityField(points, Nc, L):
                         pass
                         # Cell of the density Field that 
                         # particle would contribute to is out of bounds
+    return density
 
 def KernelCell(i,j,k,Nc):
     '''Computes the value of our kernel in Fourier space
@@ -172,4 +175,3 @@ def ForceComputation(points, Nc, L):
     force     = ForceField(potential, L)
     pforce    = ForceCIC(force, points, L)
     return pforce
-
